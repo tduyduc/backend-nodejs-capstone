@@ -6,6 +6,8 @@ const router = express.Router();
 const connectToDatabase = require('../models/db');
 const logger = require('../logger');
 
+const dbCollection = String(process.env.MONGO_COLLECTION);
+
 // Define the upload directory path
 const directoryPath = 'public/images';
 
@@ -41,7 +43,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // Add a new item
-router.post('/', {Step 3: Task 6 insert code here}, async(req, res,next) => {
+router.post('/', /*{Step 3: Task 6 insert code here},*/ async(req, res,next) => {
     try {
 
         //Step 3: task 1 - insert code here
@@ -58,10 +60,19 @@ router.post('/', {Step 3: Task 6 insert code here}, async(req, res,next) => {
 // Get a single secondChanceItem by ID
 router.get('/:id', async (req, res, next) => {
     try {
-        //Step 4: task 1 - insert code here
-        //Step 4: task 2 - insert code here
-        //Step 4: task 3 - insert code here
-        //Step 4: task 4 - insert code here
+        const db = await connectToDatabase();
+        const collection = db.collection(dbCollection);
+
+        const { id } = req.params;
+        const item = await collection.findOne({ id });
+
+        if (item) {
+            res.json(item);
+        } else {
+            res.status(404).json({
+                "error": `No items with ID "${id}"`,
+            });
+        }
     } catch (e) {
         next(e);
     }
