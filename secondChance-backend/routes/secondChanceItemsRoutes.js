@@ -28,31 +28,36 @@ const upload = multer({ storage: storage });
 router.get('/', async (req, res, next) => {
     logger.info('/ called');
     try {
-        //Step 2: task 1 - insert code here
-        //Step 2: task 2 - insert code here
-        //Step 2: task 3 - insert code here
-        //Step 2: task 4 - insert code here
-
-        const collection = db.collection("secondChanceItems");
+        const db = await connectToDatabase();
+        const collection = db.collection(dbCollection);
         const secondChanceItems = await collection.find({}).toArray();
         res.json(secondChanceItems);
     } catch (e) {
-        logger.console.error('oops something went wrong', e)
+        logger.error('oops something went wrong', e)
         next(e);
     }
 });
 
 // Add a new item
-router.post('/', /*{Step 3: Task 6 insert code here},*/ async(req, res,next) => {
+router.post('/', multer({ storage: storage }).single('file'), async(req, res,next) => {
     try {
+        const db = await connectToDatabase();
+        const collection = db.collection(dbCollection);
 
-        //Step 3: task 1 - insert code here
-        //Step 3: task 2 - insert code here
-        //Step 3: task 3 - insert code here
-        //Step 3: task 4 - insert code here
-        //Step 3: task 5 - insert code here
-        res.status(201).json(secondChanceItem.ops[0]);
+        const newItem = req.body;
+        const insertResult = await collection.insertOne(newItem);
+
+        if (insertResult.acknowledged) {
+            const newItemId = insertResult.insertedId;
+            logger.info(`New item added with ID: ${newItemId}`);
+            
+            const secondChanceItem = await collection.findOne({ _id: newItemId });
+            res.status(201).json(secondChanceItem);
+        } else {
+            res.status(500).json({ error: 'Failed to add new item' });
+        }
     } catch (e) {
+        logger.error('oops something went wrong', e)
         next(e);
     }
 });
@@ -74,6 +79,7 @@ router.get('/:id', async (req, res, next) => {
             });
         }
     } catch (e) {
+        logger.error('oops something went wrong', e)
         next(e);
     }
 });
@@ -81,12 +87,23 @@ router.get('/:id', async (req, res, next) => {
 // Update and existing item
 router.put('/:id', async(req, res,next) => {
     try {
-        //Step 5: task 1 - insert code here
-        //Step 5: task 2 - insert code here
-        //Step 5: task 3 - insert code here
-        //Step 5: task 4 - insert code here
-        //Step 5: task 5 - insert code here
+        const db = await connectToDatabase();
+        const collection = db.collection(dbCollection);
+
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const updatedItem = await collection.findOneAndUpdate({ id }, { $set: updateData });
+
+        if (updatedItem) {
+            res.json(updatedItem);
+        } else {
+            res.status(404).json({
+                "error": `No items with ID "${id}"`,
+            });
+        }
     } catch (e) {
+        logger.error('oops something went wrong', e)
         next(e);
     }
 });
@@ -94,11 +111,21 @@ router.put('/:id', async(req, res,next) => {
 // Delete an existing item
 router.delete('/:id', async(req, res,next) => {
     try {
-        //Step 6: task 1 - insert code here
-        //Step 6: task 2 - insert code here
-        //Step 6: task 3 - insert code here
-        //Step 6: task 4 - insert code here
+        const db = await connectToDatabase();
+        const collection = db.collection(dbCollection);
+
+        const { id } = req.params;
+
+        const deleteResult = await collection.deleteOne({ id });
+        if (deleteResult.deletedCount > 0) {
+            res.status(204).send();
+        } else {
+            res.status(404).json({
+                "error": `No items with ID "${id}"`,
+            });
+        }
     } catch (e) {
+        logger.error('oops something went wrong', e)
         next(e);
     }
 });
