@@ -39,7 +39,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // Add a new item
-router.post('/', multer({ storage: storage }).single('file'), async(req, res,next) => {
+router.post('/', upload.single('file'), async(req, res,next) => {
     try {
         const db = await connectToDatabase();
         const collection = db.collection(dbCollection);
@@ -50,7 +50,7 @@ router.post('/', multer({ storage: storage }).single('file'), async(req, res,nex
         if (insertResult.acknowledged) {
             const newItemId = insertResult.insertedId;
             logger.info(`New item added with ID: ${newItemId}`);
-            
+
             const secondChanceItem = await collection.findOne({ _id: newItemId });
             res.status(201).json(secondChanceItem);
         } else {
