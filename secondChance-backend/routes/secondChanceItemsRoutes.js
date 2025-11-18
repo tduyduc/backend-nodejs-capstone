@@ -44,9 +44,12 @@ router.post('/', upload.single('file'), async(req, res,next) => {
         const db = await connectToDatabase();
         const collection = db.collection(dbCollection);
 
+        const ageDays = Number(req.body.age_days);
         const newItem = {
             ...req.body,
             date_added: Math.floor(Date.now() / 1000),
+            age_days: ageDays,
+            age_years: Math.round((ageDays / 365) * 10) / 10,
             id: '1',
         };
 
@@ -104,7 +107,23 @@ router.put('/:id', async(req, res,next) => {
         const { id } = req.params;
         const updateData = req.body;
 
-        const updatedItem = await collection.findOneAndUpdate({ id }, { $set: updateData });
+        const ageDays = Number(updateData.age_days);
+        const ageYears = Math.round((ageDays / 365) * 10) / 10;
+
+        const updatedItem = await collection.findOneAndUpdate(
+            { id },
+            {
+                $set: {
+                    category: updateData.category,
+                    condition: updateData.condition,
+                    description: updateData.description,
+                    age_days: ageDays,
+                    age_years: ageYears,
+                    updatedAt: new Date(),
+                },
+            },
+            { returnDocument: 'after' },
+        );
 
         if (updatedItem) {
             res.json(updatedItem);
