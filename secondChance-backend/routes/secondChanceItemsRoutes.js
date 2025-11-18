@@ -44,7 +44,18 @@ router.post('/', upload.single('file'), async(req, res,next) => {
         const db = await connectToDatabase();
         const collection = db.collection(dbCollection);
 
-        const newItem = req.body;
+        const newItem = {
+            ...req.body,
+            date_added: Math.floor(Date.now() / 1000),
+            id: '1',
+        };
+
+        const latestItemQuery = collection.find().sort({ id: 'desc' }).limit(1);
+        for await (const latestItem of latestItemQuery) {
+            newItem.id = Number.parseInt(latestItem.id, 10) + 1;
+            break;
+        }
+
         const insertResult = await collection.insertOne(newItem);
 
         if (insertResult.acknowledged) {
